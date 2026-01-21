@@ -3,95 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <title>Contact Us</title>
-
-    <!-- Stylesheet link -->
+    <link rel="stylesheet" href="/static/bootstrap.min.css">
     <link rel="stylesheet" href="/static/style.css">
-
-    <!-- Page-specific CSS -->
     <style>
-        body {
-            font-family: Arial, Helvetica, sans-serif;
-            margin: 0;
-            background-color: #f4f6f8;
-        }
-
-        header {
-            background-color: #1e293b;
-            padding: 15px 30px;
-        }
-
-        nav a {
-            color: #e5e7eb;
-            text-decoration: none;
-            margin-right: 20px;
-            font-weight: 500;
-        }
-
-        nav a.active {
-            color: #38bdf8;
-            border-bottom: 2px solid #38bdf8;
-            padding-bottom: 5px;
-        }
-
-        .container {
-            max-width: 900px;
-            margin: 40px auto;
-            background: #ffffff;
-            padding: 30px;
-            border-radius: 6px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-        }
-
-        h1 {
-            margin-bottom: 20px;
-            color: #1f2937;
-        }
-
-        .contact-item {
-            margin-bottom: 15px;
-            font-size: 16px;
-            color: #374151;
-        }
-
-        .contact-item span {
-            font-weight: bold;
-            color: #111827;
-        }
+      .contact-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 50px;
+      }
+      .contact-info {
+        margin: 20px;
+        font-size: 18px;
+      }
+      .contact-img {
+        margin: 20px;
+      }
     </style>
 </head>
 <body>
+  <nav class="navbar navbar-expand-lg navbar-light" style="background-color:darkturquoise; height: 1in;">
+    <div class="container-fluid">
+      <h2 style="padding-right: 5%;">Dealerships</h2>
+      <div class="collapse navbar-collapse">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link" style="font-size: larger;" href="/">Home</a></li>
+          <li class="nav-item"><a class="nav-link" style="font-size: larger;" href="/about">About Us</a></li>
+          <li class="nav-item"><a class="nav-link active" style="font-size: larger;" href="/contact">Contact Us</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
 
-<header>
-    <nav>
-        <a href="/">Home</a>
-        <a href="/about/">About</a>
-        <a href="/contact/" class="active">Contact Us</a>
-    </nav>
-</header>
-
-<div class="container">
-    <h1>Contact Us</h1>
-
-    <div class="contact-item">
-        <span>Company:</span> Prime Auto Dealership
+  <div class="contact-container">
+    <div class="contact-img">
+      <img src="/static/contactus.png" alt="Contact Us Image" style="width: 300px; border-radius: 10px;">
     </div>
 
-    <div class="contact-item">
-        <span>Email:</span> support@primeautodealer.com
+    <div class="contact-info card p-4">
+      <h1>Contact Us</h1>
+      <p><strong>Company:</strong> Best Cars Dealership</p>
+      <p><strong>Address:</strong> 742 Evergreen Terrace, Springfield, USA</p>
+      <p><strong>Phone:</strong> +1 (555) 123-4567</p>
+      <p><strong>Email:</strong> support@bestcars.com</p>
+      <p><strong>Business Hours:</strong> Mon-Fri: 9:00 AM - 6:00 PM</p>
     </div>
-
-    <div class="contact-item">
-        <span>Phone:</span> +1 (555) 248-9012
-    </div>
-
-    <div class="contact-item">
-        <span>Address:</span> 742 Evergreen Terrace, Springfield, USA
-    </div>
-
-    <div class="contact-item">
-        <span>Business Hours:</span> Monday – Friday, 9:00 AM – 6:00 PM
-    </div>
-</div>
+  </div>
 
 </body>
 </html>
