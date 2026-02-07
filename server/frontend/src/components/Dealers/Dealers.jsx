@@ -1,96 +1,146 @@
-import React, { useState, useEffect } from 'react';
-import "./Dealers.css";
-import "../assets/style.css";
-import Header from '../Header/Header';
-import review_icon from "../assets/reviewicon.png"
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+
+// Base URL către Django (Render). În Vercel setezi REACT_APP_API_URL
+const API = process.env.REACT_APP_API_URL || "";
 
 const Dealers = () => {
-  const [dealersList, setDealersList] = useState([]);
-  // let [state, setState] = useState("")
-  let [states, setStates] = useState([])
+  const [dealers, setDealers] = useState([]);
+  const [states, setStates] = useState([]);
+  const [selectedState, setSelectedState] = useState("All");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  // let root_url = window.location.origin
-  let dealer_url ="/djangoapp/get_dealers";
-  
-  let dealer_url_by_state = "/djangoapp/get_dealers/";
- 
-  const filterDealers = async (state) => {
-    dealer_url_by_state = dealer_url_by_state+state;
-    const res = await fetch(dealer_url_by_state, {
-      method: "GET"
-    });
-    const retobj = await res.json();
-    if(retobj.status === 200) {
-      let state_dealers = Array.from(retobj.dealers)
-      setDealersList(state_dealers)
-    }
-  }
+  const dealer_url = `${API}/djangoapp/get_dealers`;
+  const dealer_url_by_state_base = `${API}/djangoapp/get_dealers/`;
 
-  const get_dealers = async ()=>{
-    const res = await fetch(dealer_url, {
-      method: "GET"
+  // În multe implementări IBM, dealer-ul are câmpul `state` (ex: "CA")
+  const buildStatesList = (dealersList) => {
+    const unique = new Set();
+    (dealersList || []).forEach((d) => {
+      if (d?.state) unique.add(d.state);
     });
-    const retobj = await res.json();
-    if(retobj.status === 200) {
-      let all_dealers = Array.from(retobj.dealers)
-      let states = [];
-      all_dealers.forEach((dealer)=>{
-        states.push(dealer.state)
+    return ["All", ...Array.from(unique).sort()];
+  };
+
+  const get_dealers = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch(dealer_url, {
+        credentials: "include",
       });
 
-      setStates(Array.from(new Set(states)))
-      setDealersList(all_dealers)
+      if (!res.ok) {
+        throw new Error(`Request failed: ${res.status}`);
+      }
+
+      const json = await res.json();
+      const list = json?.dealers || [];
+      setDealers(list);
+      setStates(buildStatesList(list));
+      setSelectedState("All");
+    } catch (err) {
+      console.error("Error loading dealers:", err);
+      setError("Nu am putut încărca dealerii. Verifică backend-ul.");
+    } finally {
+      setLoading(false);
     }
-  }
+  };
+
+  // ✅ BUG FIX: nu mai “mutăm” URL-ul; construim mereu din baza constantă
+  const filterDealers = async (state) => {
+    setSelectedState(state);
+
+    if (state === "All") {
+      return get_dealers();
+    }
+
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch(dealer_url_by_state_base + state, {
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        throw new Error(`Request failed: ${res.status}`);
+      }
+
+      const json = await res.json();
+      const list = json?.dealers || [];
+      setDealers(list);
+      // păstrăm lista de state (să nu dispară dropdown-ul)
+      if (states.length === 0) setStates(buildStatesList(list));
+    } catch (err) {
+      console.error("Error filtering dealers:", err);
+      setError("Nu am putut filtra dealerii. Verifică endpoint-ul /get_dealers/<state>.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     get_dealers();
-  },[]);  
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
+  return (
+    <div style={{ padding: "20px" }}>
+      <h2>Dealerships</h2>
 
-let isLoggedIn = sessionStorage.getItem("username") != null ? true : false;
-return(
-  <div>
-      <Header/>
+      <div style={{ margin: "12px 0" }}>
+        <label htmlFor="stateSelect" style={{ marginRight: "8px" }}>
+          Filtrează după stat:
+        </label>
+        <select
+          id="stateSelect"
+          value={selectedState}
+          onChange={(e) => filterDealers(e.target.value)}
+        >
+          {(states.length ? states : ["All"]).map((st) => (
+            <option key={st} value={st}>
+              {st}
+            </option>
+          ))}
+        </select>
+      </div>
 
-     <table className='table'>
-      <tr>
-      <th>ID</th>
-      <th>Dealer Name</th>
-      <th>City</th>
-      <th>Address</th>
-      <th>Zip</th>
-      <th>
-      <select name="state" id="state" onChange={(e) => filterDealers(e.target.value)}>
-      <option value="" selected disabled hidden>State</option>
-      <option value="All">All States</option>
-      {states.map(state => (
-          <option value={state}>{state}</option>
-      ))}
-      </select>        
+      {loading && <p>Se încarcă...</p>}
+      {error && <p style={{ color: "crimson" }}>{error}</p>}
 
-      </th>
-      {isLoggedIn ? (
-          <th>Review Dealer</th>
-         ):<></>
-      }
-      </tr>
-     {dealersList.map(dealer => (
-        <tr>
-          <td>{dealer['id']}</td>
-          <td><a href={'/dealer/'+dealer['id']}>{dealer['full_name']}</a></td>
-          <td>{dealer['city']}</td>
-          <td>{dealer['address']}</td>
-          <td>{dealer['zip']}</td>
-          <td>{dealer['state']}</td>
-          {isLoggedIn ? (
-            <td><a href={`/postreview/${dealer['id']}`}><img src={review_icon} className="review_icon" alt="Post Review"/></a></td>
-           ):<></>
-          }
-        </tr>
-      ))}
-     </table>;
-  </div>
-)
-}
+      {!loading && !error && dealers.length === 0 && (
+        <p>Nu există dealeri pentru filtrul ales.</p>
+      )}
 
-export default Dealers
+      <div style={{ display: "grid", gap: "12px" }}>
+        {dealers.map((dealer) => (
+          <div
+            key={dealer.id}
+            style={{
+              border: "1px solid #ddd",
+              borderRadius: "10px",
+              padding: "12px",
+            }}
+          >
+            <h3 style={{ margin: "0 0 6px 0" }}>{dealer.full_name}</h3>
+            <p style={{ margin: "0 0 6px 0" }}>
+              <b>Adresă:</b> {dealer.address}, {dealer.city}, {dealer.state}{" "}
+              {dealer.zip}
+            </p>
+            <p style={{ margin: "0 0 10px 0" }}>
+              <b>Dealer ID:</b> {dealer.id}
+            </p>
+
+            <div style={{ display: "flex", gap: "10px" }}>
+              <Link to={`/dealer/${dealer.id}`}>Vezi reviews</Link>
+              <Link to={`/postreview/${dealer.id}`}>Scrie un review</Link>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default Dealers;

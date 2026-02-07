@@ -22,4 +22,4 @@ RUN chmod +x /app/entrypoint.sh
 
 ENTRYPOINT ["/bin/bash","/app/entrypoint.sh"]
 
-CMD ["gunicorn", "--bind", ":8000", "--workers", "3", "djangoproj.wsgi"]
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-8000} --workers 3 djangoproj.wsgi"]

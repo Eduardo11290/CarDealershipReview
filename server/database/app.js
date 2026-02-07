@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 const fs = require('fs');
 const cors = require('cors');
 const app = express();
-const port = 3030;
+const port = process.env.PORT || 3030;
 
 app.use(cors());
 app.use(require('body-parser').urlencoded({ extended: false }));
@@ -13,7 +13,19 @@ app.use(require('body-parser').urlencoded({ extended: false }));
 const reviews_data = JSON.parse(fs.readFileSync("reviews.json", 'utf8'));
 const dealerships_data = JSON.parse(fs.readFileSync("dealerships.json", 'utf8'));
 
-mongoose.connect("mongodb://mongo_db:27017/", { 'dbName': 'dealershipsDB' });
+const mongoUri = process.env.MONGODB_URI;
+if (!mongoUri) {
+  throw new Error("Missing MONGODB_URI env var");
+}
+mongoose.connect(mongoUri);
+
+const seed = process.env.SEED_DB === "true";
+if (seed) {
+  await Reviews.deleteMany({});
+  await Reviews.insertMany(reviews_data.reviews);
+  await Dealerships.deleteMany({});
+  await Dealerships.insertMany(dealerships_data.dealerships);
+}
 
 
 const Reviews = require('./review');
