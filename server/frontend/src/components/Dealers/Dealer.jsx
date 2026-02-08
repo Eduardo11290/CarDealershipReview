@@ -8,101 +8,91 @@ import negative_icon from "../assets/negative.png";
 import review_icon from "../assets/reviewbutton.png";
 import Header from "../Header/Header";
 
-const API = process.env.REACT_APP_API_URL || "";
+const API = (process.env.REACT_APP_API_URL || "").replace(/\/$/, "");
 
 const Dealer = () => {
+  const { id } = useParams();
+
   const [dealer, setDealer] = useState({});
   const [reviews, setReviews] = useState([]);
   const [unreviewed, setUnreviewed] = useState(false);
-  const [postReview, setPostReview] = useState(<></>);
 
-  const params = useParams();
-  const id = params.id;
+  const dealer_url = `${API}/djangoapp/dealer/${id}`;
+  const reviews_url = `${API}/djangoapp/reviews/dealer/${id}`;
 
-  // Preferă backend-ul din env (Vercel), altfel fallback la origin
-  const baseUrl = (API ? API.replace(/\/$/, "") : window.location.origin);
+  const get_dealer = async () => {
+    const res = await fetch(dealer_url, {
+      method: "GET",
+      credentials: "include",
+    });
+    const retobj = await res.json();
 
-  const dealer_url = `${baseUrl}/djangoapp/dealer/${id}`;
-  const reviews_url = `${baseUrl}/djangoapp/reviews/dealer/${id}`;
-  const post_review = `${window.location.origin}/postreview/${id}`; // link-ul de postreview e pe frontend
+    if (retobj.status === 200 && retobj.dealer.length > 0) {
+      setDealer(retobj.dealer[0]);
+    }
+  };
 
-  const senti_icon = (sentiment) => {
-    return sentiment === "positive"
+  const get_reviews = async () => {
+    const res = await fetch(reviews_url, {
+      method: "GET",
+      credentials: "include",
+    });
+    const retobj = await res.json();
+
+    if (retobj.status === 200) {
+      if (retobj.reviews.length > 0) {
+        setReviews(retobj.reviews);
+      } else {
+        setUnreviewed(true);
+      }
+    }
+  };
+
+  const senti_icon = (sentiment) =>
+    sentiment === "positive"
       ? positive_icon
       : sentiment === "negative"
       ? negative_icon
       : neutral_icon;
-  };
 
   useEffect(() => {
-    const load = async () => {
-      // dealer
-      const resDealer = await fetch(dealer_url, {
-        method: "GET",
-        credentials: "include",
-      });
-      const dealerObj = await resDealer.json();
-      if (dealerObj.status === 200) {
-        const dealerobjs = Array.from(dealerObj.dealer);
-        setDealer(dealerobjs[0] || {});
-      }
+    get_dealer();
+    get_reviews();
+  }, []);
 
-      // reviews
-      const resReviews = await fetch(reviews_url, {
-        method: "GET",
-        credentials: "include",
-      });
-      const reviewsObj = await resReviews.json();
-      if (reviewsObj.status === 200) {
-        if (reviewsObj.reviews && reviewsObj.reviews.length > 0) {
-          setReviews(reviewsObj.reviews);
-          setUnreviewed(false);
-        } else {
-          setReviews([]);
-          setUnreviewed(true);
-        }
-      }
-
-      // post review button
-      if (sessionStorage.getItem("username")) {
-        setPostReview(
-          <a href={post_review}>
-            <img
-              src={review_icon}
-              style={{ width: "10%", marginLeft: "10px", marginTop: "10px" }}
-              alt="Post Review"
-            />
-          </a>
-        );
-      } else {
-        setPostReview(<></>);
-      }
-    };
-
-    load();
-  }, [dealer_url, reviews_url, post_review]);
+  const isLoggedIn = sessionStorage.getItem("username");
 
   return (
     <div style={{ margin: "20px" }}>
       <Header />
+
       <div style={{ marginTop: "10px" }}>
         <h1 style={{ color: "grey" }}>
           {dealer.full_name}
-          {postReview}
+          {isLoggedIn && (
+            <a href={`/postreview/${id}`}>
+              <img
+                src={review_icon}
+                style={{ width: "10%", marginLeft: "10px", marginTop: "10px" }}
+                alt="Post Review"
+              />
+            </a>
+          )}
         </h1>
+
         <h4 style={{ color: "grey" }}>
-          {dealer["city"]}, {dealer["address"]}, {dealer["state"]}
+          {dealer.city}, {dealer.address}, {dealer.state}
         </h4>
       </div>
 
       <div className="reviews_panel">
-        {reviews.length === 0 && unreviewed === false ? (
-          <span>Loading Reviews....</span>
-        ) : unreviewed === true ? (
+        {reviews.length === 0 && !unreviewed ? (
+          <div>Loading Reviews...</div>
+        ) : unreviewed ? (
           <div>No reviews yet!</div>
         ) : (
           reviews.map((review) => (
-            <div className="review_panel" key={review.id || `${review.name}-${review.review}`}>
+            <div className="review_panel" key={review.id}>
               <img
                 src={senti_icon(review.sentiment)}
                 className="emotion_icon"
@@ -110,7 +100,8 @@ const Dealer = () => {
               />
               <div className="review">{review.review}</div>
               <div className="reviewer">
-                {review.name} {review.car_make} {review.car_model} {review.car_year}
+                {review.name} — {review.car_make} {review.car_model}{" "}
+                {review.car_year}
               </div>
             </div>
           ))
