@@ -1,44 +1,40 @@
-import LoginPanel from "./components/Login/Login";
+import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import Register from "./components/Register/Register";
+
 import Dealers from "./components/Dealers/Dealers";
 import Dealer from "./components/Dealers/Dealer";
 import PostReview from "./components/Dealers/PostReview";
+import Login from "./components/Login/Login";
+import Register from "./components/Register/Register";
 
-const About = () => (
-  <div style={{ margin: 20 }}>
-    <h2>About Us</h2>
-    <p>Car Dealership Review app.</p>
-  </div>
-);
+import Home from "./components/Home/Home";
+import About from "./components/About/About";
+import Contact from "./components/Contact/Contact";
 
-const Contact = () => (
-  <div style={{ margin: 20 }}>
-    <h2>Contact</h2>
-    <p>Contact page.</p>
-  </div>
-);
-
-function App() {
+export default function App() {
   return (
     <Routes>
-      {/* IMPORTANT: homepage */}
-      <Route path="/" element={<Dealers />} />
+      {/* Landing */}
+      <Route path="/" element={<Home />} />
 
-      <Route path="/login" element={<LoginPanel />} />
-      <Route path="/register" element={<Register />} />
+      {/* Pages */}
+      <Route path="/about" element={<About />} />
+      <Route path="/contact" element={<Contact />} />
 
+      {/* Dealership routes */}
       <Route path="/dealers" element={<Dealers />} />
       <Route path="/dealer/:id" element={<Dealer />} />
       <Route path="/postreview/:id" element={<PostReview />} />
 
-      {/* pentru link-urile din Header */}
-      <Route path="/about" element={<About />} />
-      <Route path="/contact" element={<Contact />} />
+      {/* Auth */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
 
-      {/* fallback */}
+      {/* Old links */}
+      <Route path="/home" element={<Navigate to="/" replace />} />
+
+      {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
-export default App;

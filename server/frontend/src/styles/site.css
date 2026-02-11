@@ -1,0 +1,149 @@
+/* ---------- Theme tokens ---------- */
+:root {
+  --bg: #0b1220;
+  --surface: rgba(255, 255, 255, 0.06);
+  --surface-2: rgba(255, 255, 255, 0.09);
+  --border: rgba(255, 255, 255, 0.12);
+  --text: rgba(255, 255, 255, 0.92);
+  --muted: rgba(255, 255, 255, 0.7);
+  --brand: #d4af37; /* premium gold */
+  --brand-2: #5eead4; /* subtle accent */
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  --radius: 16px;
+}
+
+:root[data-theme="light"] {
+  --bg: #f6f7fb;
+  --surface: #ffffff;
+  --surface-2: #f0f2f7;
+  --border: rgba(15, 23, 42, 0.12);
+  --text: rgba(15, 23, 42, 0.92);
+  --muted: rgba(15, 23, 42, 0.7);
+  --brand: #0f172a; /* deep navy */
+  --brand-2: #d4af37; /* gold accent */
+  --shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+}
+
+/* ---------- Base ---------- */
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* nicer container spacing */
+.container {
+  max-width: 1100px;
+}
+
+/* ---------- Premium navbar ---------- */
+.navbar {
+  background: var(--surface) !important;
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+}
+
+.navbar .navbar-brand,
+.navbar .nav-link {
+  color: var(--text) !important;
+}
+
+.navbar .nav-link.active {
+  color: var(--brand-2) !important;
+}
+
+/* ---------- Buttons ---------- */
+.btn-premium {
+  background: var(--brand-2);
+  border: 1px solid transparent;
+  color: #0b1220;
+  font-weight: 700;
+  border-radius: 999px;
+}
+
+:root[data-theme="light"] .btn-premium {
+  background: var(--brand);
+  color: #ffffff;
+}
+
+.btn-outline-premium {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 999px;
+}
+
+/* ---------- Cards ---------- */
+.card {
+  border-radius: var(--radius) !important;
+  border: 1px solid var(--border) !important;
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  box-shadow: var(--shadow);
+}
+
+.card .text-muted {
+  color: var(--muted) !important;
+}
+
+/* hover lift */
+.hover-lift {
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+}
+
+/* ---------- ReactBits-ish background glow ---------- */
+.hero-wrap {
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-glow {
+  position: absolute;
+  inset: -200px;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(94, 234, 212, 0.22), transparent 45%),
+    radial-gradient(circle at 70% 40%, rgba(212, 175, 55, 0.20), transparent 46%),
+    radial-gradient(circle at 50% 70%, rgba(147, 51, 234, 0.12), transparent 50%);
+  filter: blur(18px);
+  animation: floatGlow 10s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes floatGlow {
+  0% { transform: translate3d(0,0,0) scale(1); }
+  50% { transform: translate3d(12px,-10px,0) scale(1.03); }
+  100% { transform: translate3d(0,0,0) scale(1); }
+}
+
+/* ---------- Entrance animation ---------- */
+.fade-up {
+  animation: fadeUp 600ms ease both;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- Footer ---------- */
+.site-footer {
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  backdrop-filter: blur(10px);
+}

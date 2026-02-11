@@ -1,93 +1,150 @@
-import React from "react";
-import "../assets/style.css";
-import "../assets/bootstrap.min.css";
+import React, { useCallback, useContext, useMemo } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { ThemeContext } from "../../theme/ThemeProvider";
 
 const API = (process.env.REACT_APP_API_URL || "").replace(/\/$/, "");
 
-const Header = () => {
-  const logout = async (e) => {
-    e.preventDefault();
+function linkClass({ isActive }) {
+  return `nav-link ${isActive ? "active fw-semibold" : ""}`;
+}
 
-    const logout_url = `${API}/djangoapp/logout`;
+export default function Header() {
+  const navigate = useNavigate();
+  const { theme, toggleTheme } = useContext(ThemeContext);
 
-    const res = await fetch(logout_url, {
-      method: "GET",
-      credentials: "include",
-    });
+  const currUser = sessionStorage.getItem("username");
 
-    const json = await res.json();
-    if (json) {
-      const username = sessionStorage.getItem("username");
-      sessionStorage.removeItem("username");
-      sessionStorage.removeItem("firstname");
-      sessionStorage.removeItem("lastname");
-      alert("Logging out " + username + "...");
-      window.location.href = "/";
-    } else {
-      alert("The user could not be logged out.");
-    }
-  };
+  const logoutUrl = useMemo(() => `${API}/djangoapp/logout`, []);
 
-  let home_page_items = <div></div>;
-  const curr_user = sessionStorage.getItem("username");
+  const logout = useCallback(
+    async (e) => {
+      e.preventDefault();
 
-  if (curr_user) {
-    home_page_items = (
-      <div className="input_panel">
-        <span className="username">{curr_user}</span>
-        <a className="nav_item" href="/" onClick={logout}>
-          Logout
-        </a>
-      </div>
-    );
-  } else {
-    home_page_items = (
-      <div className="input_panel">
-        <a className="nav_item" href="/login">
-          Login
-        </a>
-        <a className="nav_item" href="/register">
-          Register
-        </a>
-      </div>
-    );
-  }
+      try {
+        const res = await fetch(logoutUrl, {
+          method: "GET",
+          credentials: "include",
+        });
+
+        const json = await res.json();
+
+        if (json) {
+          const username = sessionStorage.getItem("username");
+
+          sessionStorage.removeItem("username");
+          sessionStorage.removeItem("firstname");
+          sessionStorage.removeItem("lastname");
+
+          // eslint-disable-next-line no-alert
+          alert(`Logging out ${username || ""}...`);
+
+          navigate("/", { replace: true });
+        } else {
+          // eslint-disable-next-line no-alert
+          alert("The user could not be logged out.");
+        }
+      } catch (err) {
+        // eslint-disable-next-line no-alert
+        alert("Logout failed. Try again.");
+      }
+    },
+    [logoutUrl, navigate]
+  );
 
   return (
-    <div>
-      <nav className="navbar navbar-expand-lg navbar-light" style={{ backgroundColor: "darkturquoise", height: "1in" }}>
-        <div className="container-fluid">
-          <h2 style={{ paddingRight: "5%" }}>Dealerships</h2>
+    <nav className="navbar navbar-expand-lg">
+      <div className="container-fluid">
+        {/* Brand */}
+        <NavLink className="navbar-brand fw-bold" to="/">
+          Best Cars Dealership
+        </NavLink>
 
-          <div className="collapse navbar-collapse" id="navbarText">
-            <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-              <li className="nav-item">
-                <a className="nav-link active" style={{ fontSize: "larger" }} aria-current="page" href="/">
-                  Home
-                </a>
-              </li>
-              <li className="nav-item">
-                <a className="nav-link" style={{ fontSize: "larger" }} href="/about">
-                  About Us
-                </a>
-              </li>
-              <li className="nav-item">
-                <a className="nav-link" style={{ fontSize: "larger" }} href="/contact">
-                  Contact Us
-                </a>
-              </li>
-            </ul>
+        {/* Mobile Toggle */}
+        <button
+          className="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarContent"
+          aria-controls="navbarContent"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span className="navbar-toggler-icon" />
+        </button>
 
-            <span className="navbar-text">
-              <div className="loginlink" id="loginlogout">
-                {home_page_items}
-              </div>
-            </span>
+        {/* Nav Content */}
+        <div className="collapse navbar-collapse" id="navbarContent">
+          {/* Left Links */}
+          <ul className="navbar-nav me-auto mb-2 mb-lg-0">
+            <li className="nav-item">
+              <NavLink className={linkClass} to="/">
+                Home
+              </NavLink>
+            </li>
+
+            <li className="nav-item">
+              <NavLink className={linkClass} to="/dealers">
+                Dealerships
+              </NavLink>
+            </li>
+
+            <li className="nav-item">
+              <NavLink className={linkClass} to="/about">
+                About Us
+              </NavLink>
+            </li>
+
+            <li className="nav-item">
+              <NavLink className={linkClass} to="/contact">
+                Contact Us
+              </NavLink>
+            </li>
+          </ul>
+
+          {/* Right Side */}
+          <div className="d-flex gap-2 align-items-center">
+            {/* Theme Toggle */}
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+              title="Toggle theme"
+            >
+              {theme === "dark" ? "☀" : "☾"}
+            </button>
+
+            {currUser ? (
+              <>
+                <span className="fw-semibold">{currUser}</span>
+                <a
+                  href="/"
+                  onClick={logout}
+                  className="btn btn-outline-premium btn-sm"
+                >
+                  Logout
+                </a>
+              </>
+            ) : (
+              <>
+                <NavLink
+                  className="btn btn-outline-premium btn-sm"
+                  to="/login"
+                >
+                  Login
+                </NavLink>
+
+                <NavLink
+                  className="btn btn-premium btn-sm"
+                  to="/register"
+                >
+                  Register
+                </NavLink>
+              </>
+            )}
           </div>
         </div>
-      </nav>
-    </div>
+      </div>
+    </nav>
   );
-};
-
-export default Header;
+}

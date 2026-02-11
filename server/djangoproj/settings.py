@@ -128,6 +128,12 @@ CORS_ALLOWED_ORIGINS = (
     if os.getenv("CORS_ALLOWED_ORIGINS")
     else []
 )
+# Local dev: React pe 3000
+if DEBUG:
+    CORS_ALLOWED_ORIGINS += [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
 
 CSRF_TRUSTED_ORIGINS = (
     os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",")

@@ -22,7 +22,7 @@ const Login = () => {
 
     const json = await res.json();
 
-    if (json.status != null && json.status === "Authenticated") {
+    if (json.status !== null && json.status === "Authenticated") {
       sessionStorage.setItem("username", userName);
       if (json.first_name) sessionStorage.setItem("firstname", json.first_name);
       if (json.last_name) sessionStorage.setItem("lastname", json.last_name);

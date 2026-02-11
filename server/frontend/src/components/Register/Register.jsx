@@ -1,116 +1,56 @@
-import React, { useState } from "react";
-import "./Register.css";
-import user_icon from "../assets/person.png";
-import email_icon from "../assets/email.png";
-import password_icon from "../assets/password.png";
-import close_icon from "../assets/close.png";
+import React from "react";
+import Header from "../Header/Header";
+import { Link } from "react-router-dom";
 
-const API = (process.env.REACT_APP_API_URL || "").replace(/\/$/, "");
-
-const Register = () => {
-  const [userName, setUserName] = useState("");
-  const [password, setPassword] = useState("");
-  const [email, setEmail] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setlastName] = useState("");
-
-  const gohome = () => {
-    window.location.href = "/";
-  };
-
-  const register = async (e) => {
-    e.preventDefault();
-
-    const register_url = `${API}/djangoapp/register`;
-
-    const res = await fetch(register_url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({
-        userName,
-        password,
-        email,
-        firstName,
-        lastName,
-      }),
-    });
-
-    const json = await res.json();
-
-    if (json.status === 200) {
-      alert("Registered successfully. Please login.");
-      window.location.href = "/login";
-      return;
-    }
-
-    alert("Registration failed.");
-  };
-
+export default function Register() {
   return (
-    <div className="register_container">
-      <div className="register_header">
-        <h2>Register</h2>
-        <img src={close_icon} alt="close" onClick={gohome} style={{ cursor: "pointer" }} />
+    <>
+      <Header />
+
+      <div className="container py-5">
+        <div className="row justify-content-center">
+          <div className="col-12 col-sm-10 col-md-7 col-lg-5">
+            <div className="card shadow-sm">
+              <div className="card-body p-4">
+                <h2 className="h4 mb-4 text-center">Create Account</h2>
+
+                <div className="mb-3">
+                  <label className="form-label">First Name</label>
+                  <input className="form-control" placeholder="First name" />
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label">Last Name</label>
+                  <input className="form-control" placeholder="Last name" />
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label">Username</label>
+                  <input className="form-control" placeholder="Username" />
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label">Email</label>
+                  <input type="email" className="form-control" placeholder="you@example.com" />
+                </div>
+
+                <div className="mb-4">
+                  <label className="form-label">Password</label>
+                  <input type="password" className="form-control" placeholder="Password" />
+                </div>
+
+                <button className="btn btn-dark w-100 mb-3">
+                  Register
+                </button>
+
+                <p className="text-center mb-0">
+                  Already have an account? <Link to="/login">Login</Link>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-
-      <form onSubmit={register}>
-        <div className="input">
-          <img src={user_icon} alt="user" />
-          <input
-            type="text"
-            placeholder="Username"
-            value={userName}
-            onChange={(e) => setUserName(e.target.value)}
-          />
-        </div>
-
-        <div className="input">
-          <img src={email_icon} alt="email" />
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
-
-        <div className="input">
-          <img src={user_icon} alt="first" />
-          <input
-            type="text"
-            placeholder="First name"
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-          />
-        </div>
-
-        <div className="input">
-          <img src={user_icon} alt="last" />
-          <input
-            type="text"
-            placeholder="Last name"
-            value={lastName}
-            onChange={(e) => setlastName(e.target.value)}
-          />
-        </div>
-
-        <div className="input">
-          <img src={password_icon} alt="pass" />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
-
-        <button type="submit" className="submit">
-          Register
-        </button>
-      </form>
-    </div>
+    </>
   );
-};
-
-export default Register;
+}
