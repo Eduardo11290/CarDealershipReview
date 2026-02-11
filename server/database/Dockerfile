@@ -1,16 +1,16 @@
 FROM node:18.12.1-bullseye-slim
 
-RUN npm install -g npm@9.1.3
+# App folder (avoid installing into /)
+WORKDIR /usr/src/app
 
-ADD package.json .
-ADD app.js .
-ADD review.js .
-ADD dealership.js .
-ADD data/dealerships.json .
-ADD data/reviews.json .
+# Copy only package.json first so Docker caching behaves correctly
+COPY package.json ./
+
+# Clean install (forces a fresh download if cache was weird)
+RUN npm cache clean --force && npm install --production --force
+
+# Now copy the rest of the service
 COPY . .
-RUN npm install
 
 EXPOSE 3030
-
-CMD [ "node", "app.js" ]
+CMD ["node", "app.js"]
