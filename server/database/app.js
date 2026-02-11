@@ -3,6 +3,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const fs = require("fs");
+const path = require("path");
 const cors = require("cors");
 
 const Reviews = require("./review");
@@ -14,10 +15,6 @@ const port = process.env.PORT || 3030;
 // Middleware
 app.use(cors());
 app.use(express.json()); // pentru JSON (insert_review)
-
-// Citește JSON-urile locale pentru seed
-const reviews_data = JSON.parse(fs.readFileSync("reviews.json", "utf8"));
-const dealerships_data = JSON.parse(fs.readFileSync("dealerships.json", "utf8"));
 
 // Mongo URI din env
 const mongoUri = process.env.MONGODB_URI;
@@ -125,6 +122,12 @@ async function main() {
   // Seed o singură dată (doar când SEED_DB=true)
   if (seed) {
     console.log("🌱 SEED_DB=true -> seeding database...");
+
+    const reviewsPath = path.join(__dirname, "data", "reviews.json");
+    const dealershipsPath = path.join(__dirname, "data", "dealerships.json");
+
+    const reviews_data = JSON.parse(fs.readFileSync(reviewsPath, "utf8"));
+    const dealerships_data = JSON.parse(fs.readFileSync(dealershipsPath, "utf8"));
 
     await Reviews.deleteMany({});
     await Dealerships.deleteMany({});
