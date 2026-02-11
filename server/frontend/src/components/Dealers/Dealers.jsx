@@ -4,7 +4,7 @@ import "../assets/style.css";
 import Header from "../Header/Header";
 import review_icon from "../assets/reviewicon.png";
 
-const API = (process.env.REACT_APP_API_URL || "").replace(/\/$/, "");
+const API = (process.env.REACT_APP_API_URL || "http://localhost:8000").replace(/\/$/, "");
 
 const Dealers = () => {
   const [dealersList, setDealersList] = useState([]);
@@ -53,7 +53,7 @@ const Dealers = () => {
     <div>
       <Header />
 
-      <table className="table">
+      <table className="dealers-table">
         <thead>
           <tr>
             <th>ID</th>
