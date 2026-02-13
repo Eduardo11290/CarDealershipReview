@@ -25,7 +25,10 @@ export default function Footer() {
           </Link>
         </div>
 
-        <div className="text-muted">© {new Date().getFullYear()}</div>
+        <div className="text-muted">
+          © {new Date().toLocaleDateString("ro-RO", { day: "2-digit", month: "long", year: "numeric" })}
+        </div>
+
       </div>
     </footer>
   );

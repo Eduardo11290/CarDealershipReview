@@ -1,62 +1,77 @@
-/* FORCE FULL DARK TABLE */
-
+/* ===== Dealers table: theme aware ===== */
 .dealers-table {
-  width: 100%;
-  margin: 10px 0;
-  border-collapse: collapse;
-  background-color: #111827;   /* dark background */
-  color: #e5e7eb;              /* light text */
-  border: 1px solid #2a2f3a;
+  width: min(1200px, 96vw);
+  margin: 24px auto;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 14px;
+  overflow: hidden;
+
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
 }
 
-/* Header */
+/* Header cells */
 .dealers-table thead th {
-  background-color: #1f2937;
-  color: #ffffff;
-  padding: 12px;
-  border: 1px solid #2a2f3a;
-  text-align: center;
+  background: rgba(0, 0, 0, 0.04); /* light default */
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 14px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
-/* Cells */
-.dealers-table td {
-  padding: 12px;
-  border: 1px solid #2a2f3a;
-  text-align: center;
-  background-color: #111827;   /* force dark for ALL rows */
-  color: #e5e7eb;
+/* Body cells */
+.dealers-table tbody td {
+  padding: 14px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  background: transparent;
 }
 
-/* Remove zebra striping completely */
-.dealers-table tbody tr:nth-child(even),
-.dealers-table tbody tr:nth-child(odd) {
-  background-color: #111827 !important;
-}
-
-/* Hover */
-.dealers-table tbody tr:hover td {
-  background-color: #1f2937;
+/* Last row border removal */
+.dealers-table tbody tr:last-child td {
+  border-bottom: none;
 }
 
 /* Links */
 .dealers-table a {
-  color: #34d399;
-  font-weight: 600;
+  color: rgba(94, 234, 212, 0.95);
   text-decoration: none;
+  font-weight: 600;
 }
-
 .dealers-table a:hover {
   text-decoration: underline;
 }
 
-/* Dropdown */
+/* Select in header */
 .dealers-table select {
-  background-color: #1f2937;
-  color: #ffffff;
-  border: 1px solid #374151;
-  padding: 6px 10px;
-  border-radius: 6px;
+  width: 100%;
+  max-width: 180px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
 }
+
+/* Hover row: light */
+.dealers-table tbody tr:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+/* ===== Dark-mode refinements ===== */
+body.dark-mode .dealers-table thead th,
+[data-theme="dark"] .dealers-table thead th {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+body.dark-mode .dealers-table tbody tr:hover,
+[data-theme="dark"] .dealers-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
 
 /* ======================
    Keep your review styles

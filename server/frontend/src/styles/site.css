@@ -125,6 +125,72 @@ body {
   pointer-events: none;
 }
 
+/* About: card width + scroll */
+.about-card,
+.contact-card {
+  width: min(1100px, 92vw);
+  margin-top: 5%;
+}
+
+.about-scroll {
+  max-height: 72vh;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+/* Nice scrollbar (works in chromium) */
+.about-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+.about-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+}
+
+/* Contact: selectable cards */
+.contact-person-btn {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+.contact-person-btn:hover {
+  border-color: rgba(94, 234, 212, 0.55);
+}
+.contact-person-active {
+  outline: 2px solid rgba(94, 234, 212, 0.55);
+}
+
+/* --- Make sure text is readable in dark mode --- */
+body.dark-mode,
+[data-theme="dark"] {
+  color: var(--text);
+}
+
+/* bootstrap helpers that often stay black */
+body.dark-mode .text-dark,
+[data-theme="dark"] .text-dark {
+  color: var(--text) !important;
+}
+
+/* muted text in dark mode should not be too dark */
+body.dark-mode .text-muted,
+[data-theme="dark"] .text-muted {
+  color: var(--muted) !important;
+}
+
+/* cards / paragraphs / headings */
+body.dark-mode .card,
+[data-theme="dark"] .card {
+  color: var(--text);
+}
+
+body.dark-mode .card p,
+[data-theme="dark"] .card p,
+body.dark-mode .banner p,
+[data-theme="dark"] .banner p {
+  color: var(--muted);
+}
+
 @keyframes floatGlow {
   0% { transform: translate3d(0,0,0) scale(1); }
   50% { transform: translate3d(12px,-10px,0) scale(1.03); }

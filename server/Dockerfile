@@ -1,25 +1,12 @@
-FROM python:3.12.0-slim-bookworm
+FROM python:3.9.18-slim-bookworm
 
-ENV PYTHONBUFFERED 1
-ENV PYTHONWRITEBYTECODE 1
 
-ENV APP=/app
+WORKDIR /python-docker
 
-# Change the workdir.
-WORKDIR $APP
-
-# Install the requirements
-COPY requirements.txt $APP
-
+COPY requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
+COPY . .
+RUN ls
+ENV FLASK_APP=app.py
+CMD ["sh", "-c", "flask run --host=0.0.0.0 --port ${PORT:-5050}"]
 
-# Copy the rest of the files
-COPY . $APP
-
-EXPOSE 8000
-
-RUN chmod +x /app/entrypoint.sh
-
-ENTRYPOINT ["/bin/bash","/app/entrypoint.sh"]
-
-CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-8000} --workers 3 djangoproj.wsgi"]
