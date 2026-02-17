@@ -191,6 +191,34 @@ body.dark-mode .banner p,
   color: var(--muted);
 }
 
+
+/* ---------- Sections: subtle separation ---------- */
+section {
+  position: relative;
+}
+
+/* Hero height + spacing like big sites */
+.hero-wrap {
+  padding-top: 90px !important;
+  padding-bottom: 90px !important;
+}
+
+/* Make hero text pop a bit more */
+.hero-wrap h1 {
+  letter-spacing: -0.02em;
+}
+
+/* Softer images */
+img.img-fluid.rounded {
+  border: 1px solid var(--border);
+}
+
+/* Badges look cleaner */
+.badge.text-bg-dark {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+
 @keyframes floatGlow {
   0% { transform: translate3d(0,0,0) scale(1); }
   50% { transform: translate3d(12px,-10px,0) scale(1.03); }
