@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
 import "../assets/style.css";
@@ -10,164 +10,266 @@ function normalizeCarsPayload(data) {
   const arr = data?.CarModels || data?.cars || data?.models || data?.results || [];
   if (!Array.isArray(arr)) return [];
 
-  return arr.map((c, idx) => {
-    // Django returns: { CarModel, CarMake }
-    const make = c.CarMake || c.make || c.brand || c.manufacturer || "";
-    const model = c.CarModel || c.model || c.name || "";
-    const year = c.year || c.Year || c.model_year || "";
-    const id = c.id ?? c._id ?? `${make}-${model}-${year}-${idx}`;
-    const label = [make, model, year].filter(Boolean).join(" ");
-    return { id, make, model, year, name: label || model || String(id) };
-  });
+  return arr
+    .map((c, idx) => {
+      const make = c.CarMake || c.make || c.brand || "";
+      const model = c.CarModel || c.model || c.name || "";
+      const year = c.year || c.Year || c.model_year || "";
+      const id = c.id ?? c._id ?? `${make}-${model}-${year}-${idx}`;
+
+      return {
+        id,
+        make,
+        model,
+        year,
+        label: [make, model, year].filter(Boolean).join(" "),
+      };
+    })
+    .filter((x) => x.make || x.model);
 }
 
-function StarRating({ value, onChange }) {
-  const stars = [1, 2, 3, 4, 5];
+function clampHalf(value) {
+  const v = Number(value);
+  if (!Number.isFinite(v)) return 0.5;
+  return Math.min(5, Math.max(0.5, Math.round(v * 2) / 2));
+}
 
-  const handleClick = (starIndex, e) => {
+function StarIcon({ fill = 0 }) {
+  // fill: 0..1 (0 empty, 0.5 half, 1 full)
+  return (
+    <svg viewBox="0 0 24 24" className="star-svg" aria-hidden="true">
+      {/* base outline */}
+      <path
+        className="star-outline"
+        d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
+      />
+      {/* filled part clipped */}
+      <defs>
+        <clipPath id={`clip-${String(fill).replace(".", "-")}-${Math.random().toString(16).slice(2)}`}>
+          <rect x="0" y="0" width={24 * fill} height="24" />
+        </clipPath>
+      </defs>
+      <path
+        className="star-fill"
+        clipPath={`url(#clip-${String(fill).replace(".", "-")}-${Math.random().toString(16).slice(2)})`}
+        d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
+      />
+    </svg>
+  );
+}
+
+/**
+ * StarRating:
+ * - half-star selection (0.5 steps)
+ * - hover preview
+ * - click to set
+ */
+function StarRating({ value, onChange }) {
+  const [hoverValue, setHoverValue] = useState(null);
+  const displayValue = hoverValue ?? value;
+
+  function getValueFromEvent(index, e) {
     const rect = e.currentTarget.getBoundingClientRect();
-    const isLeftHalf = e.clientX - rect.left < rect.width / 2;
-    const newValue = isLeftHalf ? starIndex - 0.5 : starIndex;
-    onChange(newValue);
-  };
+    const x = e.clientX - rect.left;
+    const half = x < rect.width / 2 ? 0.5 : 1;
+    return clampHalf(index - 1 + half);
+  }
 
   return (
-    <div className="d-flex align-items-center gap-2">
-      <div className="d-flex gap-1">
-        {stars.map((i) => {
-          const full = value >= i;
-          const half = !full && value >= i - 0.5;
+    <div className="rating-wrap">
+      <div
+        className="stars"
+        onMouseLeave={() => setHoverValue(null)}
+        role="radiogroup"
+        aria-label="Rating"
+      >
+        {[1, 2, 3, 4, 5].map((index) => {
+          // Determine how filled this star should be given displayValue
+          const diff = displayValue - (index - 1);
+          const fill = diff >= 1 ? 1 : diff >= 0.5 ? 0.5 : 0;
 
           return (
             <button
-              key={i}
+              key={index}
               type="button"
-              className="star-btn"
-              onClick={(e) => handleClick(i, e)}
-              aria-label={`${i} stars`}
-              title="Click left for half, right for full"
+              className="star-hit"
+              onMouseMove={(e) => setHoverValue(getValueFromEvent(index, e))}
+              onFocus={() => setHoverValue(null)}
+              onClick={(e) => onChange(getValueFromEvent(index, e))}
+              onMouseDown={(e) => e.preventDefault()}
+              aria-label={`${index} star`}
             >
-              <span className={`star ${full ? "star-full" : half ? "star-half" : "star-empty"}`}>★</span>
+              <StarIcon fill={fill} />
             </button>
           );
         })}
       </div>
 
-      <div className="text-muted" style={{ minWidth: 56 }}>
-        {value.toFixed(1)}
+      <div className="star-value">
+        {displayValue}/5
       </div>
     </div>
   );
 }
 
 export default function PostReview() {
-  const { dealerId } = useParams();
+  const params = useParams();
+  const dealerId = Number(params.id ?? params.dealerId);
   const navigate = useNavigate();
 
-  const isLoggedIn = sessionStorage.getItem("username") != null;
-  const username = sessionStorage.getItem("username") || "";
-
   const [cars, setCars] = useState([]);
-  const [carsLoading, setCarsLoading] = useState(false);
-  const [carsError, setCarsError] = useState("");
-
   const [carId, setCarId] = useState("");
-  const [rating, setRating] = useState(4.5); // float rating
+  const [rating, setRating] = useState(5);
   const [title, setTitle] = useState("");
   const [review, setReview] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
-  const carsUrl = useMemo(() => `${API}/djangoapp/get_cars`, []);
+  const [dealerName, setDealerName] = useState("");
+  const [dealerLoading, setDealerLoading] = useState(false);
+
+  const username =
+    sessionStorage.getItem("userName") ||
+    sessionStorage.getItem("username") ||
+    sessionStorage.getItem("user") ||
+    sessionStorage.getItem("name") ||
+    "";
+
+  const selectedCar = useMemo(
+    () => cars.find((c) => String(c.id) === String(carId)),
+    [cars, carId]
+  );
 
   useEffect(() => {
-    if (!isLoggedIn) return;
-
-    (async () => {
+    async function loadCars() {
       try {
-        setCarsLoading(true);
-        setCarsError("");
-
-        const res = await fetch(carsUrl, { method: "GET", credentials: "include" });
-        const text = await res.text();
-
-        let data;
-        try {
-          data = JSON.parse(text);
-        } catch {
-          data = null;
-        }
-
-        console.log("get_cars status:", res.status);
-        console.log("get_cars raw:", text);
-
-        if (!res.ok || !data) {
-          setCarsError(`Could not load cars list (HTTP ${res.status}).`);
-          setCars([]);
-          return;
-        }
-
+        const res = await fetch(`${API}/djangoapp/get_cars`, { credentials: "include" });
+        const data = await res.json();
         const normalized = normalizeCarsPayload(data);
         setCars(normalized);
-
-        if (normalized.length > 0) {
-          setCarId(String(normalized[0].id));
-        }
-      } catch (e) {
-        console.error("Fetch error:", e);
-        setCarsError("Network error loading cars.");
-      } finally {
-        setCarsLoading(false);
+        if (normalized.length) setCarId(String(normalized[0].id));
+      } catch {
+        setCars([]);
       }
-    })();
-  }, [carsUrl, isLoggedIn]);
+    }
+    loadCars();
+  }, []);
 
   useEffect(() => {
-    if (!isLoggedIn) navigate("/login");
-  }, [isLoggedIn, navigate]);
+    async function loadDealer() {
+      if (!dealerId || Number.isNaN(dealerId)) return;
 
-  const selectedCar = cars.find((c) => String(c.id) === String(carId));
+      setDealerLoading(true);
+      try {
+        const res = await fetch(`${API}/djangoapp/get_dealer/${dealerId}`, {
+          credentials: "include",
+        });
+        const data = await res.json().catch(() => null);
+
+        // Handle many possible shapes:
+        // - [ { ...dealer } ]
+        // - { dealer: {...} }
+        // - { dealers: [ ... ] }
+        // - { Dealer: {...} } etc.
+        const candidate =
+          (Array.isArray(data) && data[0]) ||
+          (Array.isArray(data?.dealers) && data.dealers[0]) ||
+          data?.dealer ||
+          data?.Dealer ||
+          data?.dealership ||
+          data?.Dealership ||
+          data;
+
+        const name =
+          candidate?.full_name ||
+          candidate?.name ||
+          candidate?.dealer_name ||
+          candidate?.DealerName ||
+          candidate?.dealer ||
+          candidate?.business_name ||
+          candidate?.short_name ||
+          "";
+
+        setDealerName(String(name || ""));
+      } catch {
+        setDealerName("");
+      } finally {
+        setDealerLoading(false);
+      }
+    }
+
+    loadDealer();
+  }, [dealerId]);
+
+  function clearForm() {
+    setRating(5);
+    setTitle("");
+    setReview("");
+    setError("");
+  }
 
   async function submitReview(e) {
     e.preventDefault();
+    setError("");
 
-    if (!carId) return alert("Please select a car.");
-    if (!title.trim()) return alert("Please add a title.");
-    if (review.trim().length < 10) return alert("Review should be at least 10 characters.");
+    if (!username) {
+      setError("You must be logged in to post a review.");
+      return;
+    }
+    if (!dealerId || Number.isNaN(dealerId)) {
+      setError("Invalid dealer ID in URL.");
+      return;
+    }
+    if (!selectedCar) {
+      setError("Please select a car.");
+      return;
+    }
+    if (title.trim().length < 3) {
+      setError("Title should be at least 3 characters.");
+      return;
+    }
+    if (review.trim().length < 10) {
+      setError("Review should be at least 10 characters.");
+      return;
+    }
+
+    const safeRating = clampHalf(rating);
 
     const payload = {
-      dealer_id: Number(dealerId),
+      dealer_id: dealerId,
       username,
-      car: selectedCar?.name || "",
-      rating: Number(rating), // can be 4.5
-      purchased: false, // removed from UI
       title: title.trim(),
+      rating: safeRating,
       review: review.trim(),
-      purchase_date: null,
+      purchased: false,
+      purchase_date: "",
+
+      car_make: selectedCar.make || "",
+      car_model: selectedCar.model || "",
+      car_year: Number(selectedCar.year) || 2023,
     };
 
-    console.log("Submitting review payload:", payload);
-
-    const postUrl = `${API}/djangoapp/add_review`;
-
     try {
-      const res = await fetch(postUrl, {
+      setSubmitting(true);
+
+      const res = await fetch(`${API}/djangoapp/add_review`, {
         method: "POST",
-        credentials: "include",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(payload),
       });
 
       const data = await res.json().catch(() => ({}));
-      console.log("add_review response:", data);
 
-      if (!res.ok) {
-        alert("Failed to submit review. Check console / backend logs.");
-        return;
+      if (!res.ok || data?.status === 401 || data?.status === 403) {
+        throw new Error(data?.message || "Failed to submit review.");
       }
 
-      alert("Review submitted successfully!");
       navigate(`/dealer/${dealerId}`);
     } catch (err) {
-      alert("Network error submitting review.");
+      setError(err?.message || "Something went wrong.");
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -175,111 +277,99 @@ export default function PostReview() {
     <>
       <Header />
 
-      <div className="container py-4">
-        <div className="card mx-auto postreview-card">
-          <div className="banner">
-            <h1>Leave a review</h1>
-            <p>Help others by sharing your experience. Your review improves transparency and dealership quality.</p>
-          </div>
+      <div className="container py-5">
+        <div className="review-shell fade-up">
+          <h1 className="review-title">Leave a review</h1>
+          <p className="review-subtitle">
+            Help others by sharing your experience. Your review improves transparency and dealership quality.
+          </p>
 
-          <div className="p-4">
-            <div className="row g-4">
-              <div className="col-12 col-lg-4">
-                <div className="card p-3 h-100">
-                  <div className="fw-bold mb-2">Review details</div>
+          <div className="row g-4 mt-1">
+            {/* Left panel */}
+            <div className="col-12 col-lg-4">
+              <div className="card p-4 h-100 review-panel">
+                <div className="fw-semibold mb-3">Review details</div>
 
-                  <div className="mb-3">
-                    <label className="form-label">Dealer ID</label>
-                    <input className="form-control" value={dealerId} disabled />
-                  </div>
+                <div className="text-muted small mb-2">Dealership</div>
+                <div className="pill mb-3">
+                  {dealerLoading ? "Loading..." : (dealerName ? dealerName : `Dealer #${dealerId}`)}
+                </div>
 
-                  <div className="mb-3">
-                    <label className="form-label">Username</label>
-                    <input className="form-control" value={username} disabled />
-                  </div>
+                <div className="text-muted small mb-2">Username</div>
+                <div className="pill mb-3">{username || "Not logged in"}</div>
 
-                  <div className="text-muted">
-                    Tip: keep it specific — staff behavior, transparency, wait times, and after-sales support.
-                  </div>
+                <div className="text-muted small">
+                  Tip: keep it specific — staff behavior, transparency, wait times, paperwork, and after-sales support.
                 </div>
               </div>
+            </div>
 
-              <div className="col-12 col-lg-8">
-                <div className="card p-3">
-                  <form onSubmit={submitReview}>
-                    <div className="row g-3">
-                      <div className="col-12 col-md-7">
-                        <label className="form-label">Car</label>
-                        <select
-                          className="form-select"
-                          value={carId}
-                          onChange={(e) => setCarId(e.target.value)}
-                          disabled={carsLoading}
-                        >
-                          {carsLoading ? (
-                            <option>Loading cars…</option>
-                          ) : cars.length === 0 ? (
-                            <option>No cars available</option>
-                          ) : (
-                            cars.map((c) => (
-                              <option key={c.id} value={String(c.id)}>
-                                {c.name}
-                              </option>
-                            ))
-                          )}
-                        </select>
-                        {carsError ? <div className="text-danger mt-2">{carsError}</div> : null}
-                      </div>
+            {/* Right panel */}
+            <div className="col-12 col-lg-8">
+              <form onSubmit={submitReview} className="card p-4 review-panel" style={{ boxShadow: "var(--shadow)" }}>
+                <div className="row g-3 align-items-end">
+                  <div className="col-12 col-md-7">
+                    <label className="form-label">Car</label>
+                    <select className="form-select" value={carId} onChange={(e) => setCarId(e.target.value)}>
+                      {cars.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                      <div className="col-12 col-md-5">
-                        <label className="form-label">Rating</label>
-                        <StarRating value={rating} onChange={setRating} />
-                      </div>
-
-                      <div className="col-12 col-md-7">
-                        <label className="form-label">Title</label>
-                        <input
-                          className="form-control"
-                          value={title}
-                          onChange={(e) => setTitle(e.target.value)}
-                          placeholder="e.g., Transparent pricing and friendly staff"
-                        />
-                      </div>
-
-                      <div className="col-12">
-                        <label className="form-label">Your review</label>
-                        <textarea
-                          className="form-control"
-                          rows={6}
-                          value={review}
-                          onChange={(e) => setReview(e.target.value)}
-                          placeholder="Tell us what went well and what could be improved…"
-                        />
-                      </div>
-
-                      <div className="col-12 d-flex justify-content-end gap-2">
-                        <button
-                          type="button"
-                          className="btn btn-outline-light"
-                          onClick={() => {
-                            setTitle("");
-                            setReview("");
-                            setRating(4.5);
-                          }}
-                        >
-                          Clear
-                        </button>
-
-                        <button type="submit" className="btn btn-dark">
-                          Submit review
-                        </button>
-                      </div>
+                  <div className="col-12 col-md-5">
+                    <label className="form-label">Rating</label>
+                    <StarRating value={rating} onChange={setRating} />
+                    <div className="text-muted small mt-1">
+                      Hover to preview, click for half or full star.
                     </div>
-                  </form>
-                </div>
+                  </div>
 
-                <div className="text-muted mt-3">Note: abusive language or spam may be removed.</div>
-              </div>
+                  <div className="col-12">
+                    <label className="form-label">Title</label>
+                    <input
+                      className="form-control"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder="e.g., Transparent pricing and friendly staff"
+                      maxLength={80}
+                    />
+                    <div className="text-muted small mt-1">{title.trim().length}/80</div>
+                  </div>
+
+                  <div className="col-12">
+                    <label className="form-label">Your review</label>
+                    <textarea
+                      className="form-control"
+                      value={review}
+                      onChange={(e) => setReview(e.target.value)}
+                      placeholder="Tell us what went well and what could be improved..."
+                      rows={6}
+                      maxLength={1500}
+                    />
+                    <div className="text-muted small mt-1">{review.trim().length}/1500</div>
+                  </div>
+
+                  {error ? (
+                    <div className="col-12">
+                      <div className="alert alert-danger mb-0">{error}</div>
+                    </div>
+                  ) : null}
+
+                  <div className="col-12 d-flex justify-content-end gap-2 mt-2">
+                    <button type="button" className="btn btn-outline-secondary" onClick={clearForm} disabled={submitting}>
+                      Clear
+                    </button>
+                    <button type="submit" className="btn btn-primary" disabled={submitting}>
+                      {submitting ? "Submitting..." : "Submit review"}
+                    </button>
+                  </div>
+
+                  <div className="col-12 text-muted small">Note: abusive language or spam may be removed.</div>
+                </div>
+              </form>
             </div>
           </div>
         </div>

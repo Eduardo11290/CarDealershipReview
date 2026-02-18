@@ -13,18 +13,24 @@ from .restapis import get_request, analyze_review_sentiments, post_review
 logger = logging.getLogger(__name__)
 
 
-# Create your views here.
 def get_cars(request):
     count = CarMake.objects.filter().count()
-    print(count)
     if (count == 0):
         initiate()
+
     car_models = CarModel.objects.select_related('car_make')
     cars = []
+
     for car_model in car_models:
-        cars.append({"CarModel": car_model.name,
-                     "CarMake": car_model.car_make.name})
+        cars.append({
+            "id": car_model.id,
+            "CarModel": car_model.name,
+            "CarMake": car_model.car_make.name,
+            "year": car_model.year,
+        })
+
     return JsonResponse({"CarModels": cars})
+
 
 
 @csrf_exempt
@@ -109,14 +115,64 @@ def get_dealer_details(request, dealer_id):
 
 
 def add_review(request):
-    if not request.user.is_anonymous:
-        data = json.loads(request.body)
-        try:
-            post_review(data)
-            return JsonResponse({"status": 200})
-        except Exception:
-            return JsonResponse(
-                {"status": 401, "message": "Error in posting review"}
-            )
-    else:
+    if request.user.is_anonymous:
         return JsonResponse({"status": 403, "message": "Unauthorized"})
+
+    data = json.loads(request.body)
+
+    # Accept both formats:
+    # - new frontend format (dealer_id, username, title, rating, review, car_make/model/year...)
+    # - already-mapped format (dealership, name, purchase, purchase_date, car_make/model/year...)
+    try:
+        dealership = data.get("dealership", data.get("dealer_id"))
+        name = data.get("name", data.get("username", request.user.username))
+        purchase = data.get("purchase", data.get("purchased", False))
+        purchase_date = data.get("purchase_date") or ""
+
+        car_make = data.get("car_make")
+        car_model = data.get("car_model")
+        car_year = data.get("car_year")
+
+        # If frontend sent "car" as a single string, try best effort split:
+        # "Make Model 2020" -> make, model, year
+        if (not car_make or not car_model or not car_year) and data.get("car"):
+            parts = str(data["car"]).split()
+            if len(parts) >= 2:
+                car_make = car_make or parts[0]
+                # last part might be year
+                maybe_year = parts[-1]
+                if maybe_year.isdigit():
+                    car_year = car_year or int(maybe_year)
+                    car_model = car_model or " ".join(parts[1:-1]) or "Unknown"
+                else:
+                    car_model = car_model or " ".join(parts[1:]) or "Unknown"
+
+        # rating/title aren’t in the Node schema, so we embed them in the text
+        title = (data.get("title") or "").strip()
+        rating = data.get("rating")
+        review_text = (data.get("review") or "").strip()
+
+        if rating is not None:
+            header = f"{title} ({rating}/5)" if title else f"Rating: {rating}/5"
+        else:
+            header = title
+
+        if header:
+            review_text = f"{header} — {review_text}" if review_text else header
+
+        payload = {
+            "name": name,
+            "dealership": int(dealership),
+            "review": review_text,
+            "purchase": bool(purchase),
+            "purchase_date": str(purchase_date),
+            "car_make": str(car_make),
+            "car_model": str(car_model),
+            "car_year": int(car_year),
+        }
+
+        post_review(payload)
+        return JsonResponse({"status": 200})
+    except Exception as e:
+        logger.exception("Error in posting review")
+        return JsonResponse({"status": 401, "message": "Error in posting review"})

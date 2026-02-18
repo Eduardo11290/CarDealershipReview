@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import "./Login.css";
 import Header from "../Header/Header";
 
-const API = (process.env.REACT_APP_API_URL || "").replace(/\/$/, "");
+const API = (process.env.REACT_APP_API_URL || "http://localhost:8000").replace(/\/$/, "");
 
 const Login = () => {
   const [userName, setUserName] = useState("");
