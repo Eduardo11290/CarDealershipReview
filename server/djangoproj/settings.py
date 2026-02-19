@@ -152,14 +152,14 @@ CSRF_TRUSTED_ORIGINS = (
 
 # ✅ Fallback for production if env vars aren't set on Render
 if not DEBUG:
-    if not CORS_ALLOWED_ORIGINS:
-        CORS_ALLOWED_ORIGINS = [
-            "https://car-dealership-review-huzk.vercel.app",
-        ]
-    if not CSRF_TRUSTED_ORIGINS:
-        CSRF_TRUSTED_ORIGINS = [
-            "https://car-dealership-review-huzk.vercel.app",
-        ]
+    # Allow all Vercel preview deployments
+    CORS_ALLOWED_ORIGIN_REGEXES = [
+        r"^https://.*\.vercel\.app$",
+    ]
+
+    CSRF_TRUSTED_ORIGINS = [
+        "https://*.vercel.app",
+    ]
 
 CORS_ALLOW_CREDENTIALS = True
 
