@@ -24,6 +24,7 @@ const Login = () => {
 
     if (json.status !== null && json.status === "Authenticated") {
       sessionStorage.setItem("username", userName);
+      sessionStorage.setItem("userName", userName); // keep both keys for compatibility
       if (json.first_name) sessionStorage.setItem("firstname", json.first_name);
       if (json.last_name) sessionStorage.setItem("lastname", json.last_name);
       window.location.href = "/";

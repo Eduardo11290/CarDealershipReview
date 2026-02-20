@@ -167,6 +167,11 @@ CORS_ALLOW_CREDENTIALS = True
 # COOKIES (cross-domain login)
 # ==============================
 
+# --- Required for cross-site cookies behind Render/Cloudflare ---
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = False  # keep False unless you implement CSRF header token
+
 SESSION_COOKIE_SAMESITE = "None"
 SESSION_COOKIE_SECURE = True
 
@@ -174,3 +179,4 @@ CSRF_COOKIE_SAMESITE = "None"
 CSRF_COOKIE_SECURE = True
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
