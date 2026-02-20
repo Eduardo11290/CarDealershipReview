@@ -27,7 +27,7 @@ const review = new Schema({
   },
   purchase_date: {
     type: String,
-    required: true
+    required: false
   },
   car_make: {
     type: String,
