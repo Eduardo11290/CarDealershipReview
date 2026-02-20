@@ -140,14 +140,12 @@ def add_review(request):
     if request.method != "POST":
         return JsonResponse({"status": 405, "message": "Method Not Allowed"}, status=405)
 
-    # Must be logged in (session-based auth)
     if request.user.is_anonymous:
         return JsonResponse({"status": 403, "message": "Unauthorized"}, status=403)
 
     try:
         data = json.loads(request.body or "{}")
 
-        # Accept both formats:
         dealership = data.get("dealership", data.get("dealer_id"))
         name = data.get("name", data.get("username", request.user.username))
         purchase = data.get("purchase", data.get("purchased", False))
@@ -157,7 +155,6 @@ def add_review(request):
         car_model = data.get("car_model")
         car_year = data.get("car_year")
 
-        # If frontend sent "car" as a single string: "Make Model 2020"
         if (not car_make or not car_model or not car_year) and data.get("car"):
             parts = str(data["car"]).split()
             if len(parts) >= 2:
@@ -169,7 +166,6 @@ def add_review(request):
                 else:
                     car_model = car_model or (" ".join(parts[1:]) or "Unknown")
 
-        # rating/title aren’t in the Node schema, so embed them in the review text
         title = (data.get("title") or "").strip()
         rating = data.get("rating")
         review_text = (data.get("review") or "").strip()
@@ -188,7 +184,6 @@ def add_review(request):
                 status=400,
             )
 
-        # Safer year parse
         year_int = 0
         if car_year is not None and str(car_year).isdigit():
             year_int = int(car_year)
@@ -204,7 +199,19 @@ def add_review(request):
             "car_year": year_int,
         }
 
-        post_review(payload)
+        result = post_review(payload)
+
+        # Fail loudly if the Node/Mongo insert failed
+        if (not result) or (isinstance(result, dict) and result.get("error")):
+            return JsonResponse(
+                {
+                    "status": 502,
+                    "message": "Failed to save review in database",
+                    "details": result,
+                },
+                status=502,
+            )
+
         return JsonResponse({"status": 200, "message": "Review posted"}, status=200)
 
     except Exception:
