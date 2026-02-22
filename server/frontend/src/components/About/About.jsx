@@ -64,7 +64,7 @@ export default function About() {
 
               <div className="col-12 col-lg-4">
                 <div className="card h-100">
-                  <img className="card-img-top" src="/media/car_dealership.jpg" alt="Dealership" />
+                  <img className="card-img-top" src="/media/Cars.jpg" alt="Dealership" />
                   <div className="card-body">
                     <h5 className="title">Trust</h5>
                     <p className="mb-0">
@@ -76,7 +76,7 @@ export default function About() {
 
               <div className="col-12 col-lg-4">
                 <div className="card h-100">
-                  <img className="card-img-top" src="/media/person.png" alt="Community" />
+                  <img className="card-img-top" src="/media/community.jpg" alt="Community" />
                   <div className="card-body">
                     <h5 className="title">Community</h5>
                     <p className="mb-0">
@@ -103,10 +103,10 @@ export default function About() {
               <h4 className="mb-3">Gallery</h4>
               <div className="row g-3">
                 <div className="col-12 col-md-6">
-                  <img className="img-fluid rounded" src="/media/cars.jpeg" alt="Gallery 1" />
+                  <img className="img-fluid rounded" src="/media/Yup.jpg" alt="Gallery 1" />
                 </div>
                 <div className="col-12 col-md-6">
-                  <img className="img-fluid rounded" src="/media/car_dealership.jpg" alt="Gallery 2" />
+                  <img className="img-fluid rounded" src="/media/Big.jpg" alt="Gallery 2" />
                 </div>
               </div>
               <div className="text-muted mt-3">
