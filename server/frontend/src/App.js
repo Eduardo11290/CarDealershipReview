@@ -6,6 +6,8 @@ import Dealer from "./components/Dealers/Dealer";
 import PostReview from "./components/Dealers/PostReview";
 import Login from "./components/Login/Login";
 import Register from "./components/Register/Register";
+import ForgotPassword from "./components/PasswordReset/ForgotPassword";
+import ResetPassword from "./components/PasswordReset/ResetPassword";
 
 import Home from "./components/Home/Home";
 import About from "./components/About/About";
@@ -23,46 +25,36 @@ import Careers from "./components/Misc/Careers";
 import Press from "./components/Misc/Press";
 import Cookies from "./components/Misc/Cookies";
 
-
-
 export default function App() {
   return (
     <Routes>
-      {/* Landing */}
       <Route path="/" element={<Home />} />
 
-      {/* Pages */}
       <Route path="/about" element={<About />} />
       <Route path="/contact" element={<Contact />} />
 
-      {/* Dealership routes */}
       <Route path="/dealers" element={<Dealers />} />
       <Route path="/dealer/:id" element={<Dealer />} />
       <Route path="/postreview/:dealerId" element={<PostReview />} />
-      {/* Help */}
+
       <Route path="/faq" element={<FAQ />} />
       <Route path="/how-reviews-work" element={<HowReviewsWork />} />
 
-      {/* Tools */}
       <Route path="/tools" element={<Tools />} />
 
-      {/* Legal */}
       <Route path="/privacy" element={<Privacy />} />
       <Route path="/terms" element={<Terms />} />
       <Route path="/cookies" element={<Cookies />} />
 
-      {/* Company placeholders */}
       <Route path="/careers" element={<Careers />} />
       <Route path="/press" element={<Press />} />
 
-      {/* Auth */}
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password/:uidb64/:token" element={<ResetPassword />} />
 
-      {/* Old links */}
       <Route path="/home" element={<Navigate to="/" replace />} />
-
-      {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

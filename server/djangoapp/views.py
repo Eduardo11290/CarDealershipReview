@@ -3,7 +3,11 @@ import logging
 
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
+from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import send_mail
 from django.http import JsonResponse
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.views.decorators.csrf import csrf_exempt
 
 from .models import CarMake, CarModel
@@ -96,6 +100,91 @@ def registration(request):
     except Exception:
         logger.exception("Error in registration")
         return JsonResponse({"status": 500, "message": "Registration error"}, status=500)
+
+
+@csrf_exempt
+def password_reset_request(request):
+    if request.method != "POST":
+        return JsonResponse({"status": 405, "message": "Method Not Allowed"}, status=405)
+
+    try:
+        data = json.loads(request.body or "{}")
+        email = (data.get("email") or "").strip().lower()
+
+        if not email:
+            return JsonResponse({"status": 400, "message": "Email is required"}, status=400)
+
+        # Always return success to avoid leaking which emails exist.
+        users = User.objects.filter(email__iexact=email)
+        if users.exists():
+            user = users.first()
+            uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+            token = default_token_generator.make_token(user)
+
+            # Frontend route that will show the reset form.
+            from django.conf import settings
+
+            frontend_url = getattr(settings, "FRONTEND_URL", "http://localhost:3000")
+            reset_link = f"{frontend_url}/reset-password/{uidb64}/{token}"
+
+            send_mail(
+                subject="Reset your password",
+                message=(
+                    "Someone requested a password reset for your account.\n\n"
+                    f"Reset link: {reset_link}\n\n"
+                    "If this wasn't you, you can ignore this email."
+                ),
+                from_email=getattr(settings, "DEFAULT_FROM_EMAIL", None),
+                recipient_list=[email],
+                fail_silently=False,
+            )
+
+        return JsonResponse({"ok": True}, status=200)
+
+    except Exception:
+        logger.exception("Error in password_reset_request")
+        return JsonResponse({"status": 500, "message": "Password reset error"}, status=500)
+
+
+@csrf_exempt
+def password_reset_confirm(request, uidb64, token):
+    if request.method != "POST":
+        return JsonResponse({"status": 405, "message": "Method Not Allowed"}, status=405)
+
+    try:
+        data = json.loads(request.body or "{}")
+        password = data.get("password") or ""
+        password2 = data.get("password2") or ""
+
+        if not password or not password2:
+            return JsonResponse({"status": 400, "message": "Password is required"}, status=400)
+        if password != password2:
+            return JsonResponse({"status": 400, "message": "Passwords do not match"}, status=400)
+        if len(password) < 8:
+            return JsonResponse(
+                {"status": 400, "message": "Password must be at least 8 characters"},
+                status=400,
+            )
+
+        try:
+            uid = urlsafe_base64_decode(uidb64).decode("utf-8")
+            user = User.objects.get(pk=uid)
+        except Exception:
+            return JsonResponse({"status": 400, "message": "Invalid link"}, status=400)
+
+        if not default_token_generator.check_token(user, token):
+            return JsonResponse(
+                {"status": 400, "message": "Invalid or expired link"},
+                status=400,
+            )
+
+        user.set_password(password)
+        user.save()
+        return JsonResponse({"ok": True}, status=200)
+
+    except Exception:
+        logger.exception("Error in password_reset_confirm")
+        return JsonResponse({"status": 500, "message": "Password reset error"}, status=500)
 
 
 def get_dealerships(request, state="All"):
