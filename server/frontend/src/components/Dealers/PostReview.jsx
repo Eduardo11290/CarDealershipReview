@@ -139,6 +139,7 @@ export default function PostReview() {
 
         const candidate =
           (Array.isArray(data) && data[0]) ||
+          (Array.isArray(data?.dealer) && data.dealer[0]) || 
           (Array.isArray(data?.dealers) && data.dealers[0]) ||
           data?.dealer ||
           data?.Dealer ||
