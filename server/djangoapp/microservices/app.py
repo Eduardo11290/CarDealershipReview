@@ -1,40 +1,57 @@
-from flask import Flask
+from flask import Flask, jsonify, request
 from nltk.sentiment import SentimentIntensityAnalyzer
-import nltk  # Import nltk
+import nltk
 
-
-# Download the required lexicon
-nltk.download('vader_lexicon')
+# Download the required lexicon (do this once at startup)
+nltk.download("vader_lexicon")
 
 app = Flask("Sentiment Analyzer")
-
 sia = SentimentIntensityAnalyzer()
 
 
-@app.get('/')
+@app.get("/")
 def home():
-    return ("Welcome to the Sentiment Analyzer. "
-            "Use /analyze/text to get the sentiment")
+  return (
+    "Welcome to the Sentiment Analyzer. "
+    "Use POST /analyze with JSON {\"text\": \"...\"} to get the sentiment"
+  )
 
 
-@app.get('/analyze/<input_txt>')
-def analyze_sentiment(input_txt):
-    scores = sia.polarity_scores(input_txt)
-    print(scores)
-    pos = float(scores['pos'])
-    neg = float(scores['neg'])
-    neu = float(scores['neu'])
-    res = "positive"
-    print("pos neg neu ", pos, neg, neu)
-    if (neg > pos and neg > neu):
-        res = "negative"
-    elif (neu > neg and neu > pos):
-        res = "neutral"
+def _classify_sentiment(text: str) -> str:
+  scores = sia.polarity_scores(text)
+  pos = float(scores.get("pos", 0))
+  neg = float(scores.get("neg", 0))
+  neu = float(scores.get("neu", 0))
 
-    # It is better practice to return a proper JSON response object
-    response_data = {"sentiment": res}
-    return response_data
+  res = "positive"
+  if neg > pos and neg > neu:
+    res = "negative"
+  elif neu > neg and neu > pos:
+    res = "neutral"
+
+  return res
+
+
+# Backwards-compatible endpoint (old behavior)
+@app.get("/analyze/<path:input_txt>")
+def analyze_sentiment_get(input_txt):
+  sentiment = _classify_sentiment(input_txt)
+  return jsonify({"sentiment": sentiment})
+
+
+# Recommended endpoint (safe for any text)
+@app.post("/analyze")
+def analyze_sentiment_post():
+  data = request.get_json(silent=True) or {}
+  text = data.get("text", "")
+
+  # Allow also {"review": "..."} just in case
+  if not text:
+    text = data.get("review", "")
+
+  sentiment = _classify_sentiment(text)
+  return jsonify({"sentiment": sentiment})
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+  app.run(debug=True, host="0.0.0.0", port=5000)
