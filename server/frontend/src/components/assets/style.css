@@ -165,57 +165,42 @@
   color: var(--text);
 }
 
-/* ---------- Star rating (clean SVG, 0.5 steps) ---------- */
-.rating-wrap {
+/* ---------- Star rating (1..5 only, fill 1..N) ---------- */
+.star-rating {
   display: flex;
+  flex-direction: row-reverse;
+  justify-content: center; /* CENTER horizontally */
   align-items: center;
-  gap: 10px;
+  gap: 6px; /* smaller spacing */
+  user-select: none;
 }
 
-.stars {
-  display: flex;
-  gap: 6px;
+.star-rating > input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
 }
 
-.star-hit {
-  border: 1px solid var(--border);
-  background: var(--surface);
-  border-radius: 12px;
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  padding: 0;
+.star-rating > label {
   cursor: pointer;
-  transition: transform 0.06s ease, border-color 0.15s ease;
+  display: inline-flex;
+  transition: transform 0.15s ease;
 }
 
-.star-hit:hover {
-  transform: translateY(-1px);
+.star-rating > label svg {
+  fill: #666;
+  width: 40px;   /* smaller */
+  height: 26px;  /* smaller */
+  transition: fill 0.2s ease, filter 0.2s ease, transform 0.2s ease;
 }
 
-.star-hit:focus-visible {
-  outline: 2px solid rgba(94, 234, 212, 0.35);
-  outline-offset: 2px;
+.star-rating > label:hover svg,
+.star-rating > label:hover ~ label svg {
+  fill: #ff9e0b;
+  filter: drop-shadow(0 0 10px rgba(255, 158, 11, 0.6));
 }
 
-.star-svg {
-  width: 22px;
-  height: 22px;
-}
-
-.star-outline {
-  fill: none;
-  stroke: rgba(255, 255, 255, 0.35);
-  stroke-width: 1.4;
-}
-
-.star-fill {
-  fill: #f5c542; /* if you want theme-only, tell me and I’ll switch it */
-}
-
-.star-value {
-  font-weight: 800;
-  color: var(--text);
-  min-width: 52px;
+.star-rating > input:checked ~ label svg {
+  fill: #ff9e0b;
+  filter: drop-shadow(0 0 10px rgba(255, 158, 11, 0.6));
 }

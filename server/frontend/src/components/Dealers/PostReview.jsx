@@ -4,7 +4,10 @@ import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
 import "../assets/style.css";
 
-const API = (process.env.REACT_APP_API_URL || "http://localhost:8000").replace(/\/$/, "");
+const API = (process.env.REACT_APP_API_URL || "http://localhost:8000").replace(
+  /\/$/,
+  ""
+);
 
 function normalizeCarsPayload(data) {
   const arr = data?.CarModels || data?.cars || data?.models || data?.results || [];
@@ -28,86 +31,52 @@ function normalizeCarsPayload(data) {
     .filter((x) => x.make || x.model);
 }
 
-function clampHalf(value) {
+function clampIntRating(value) {
   const v = Number(value);
-  if (!Number.isFinite(v)) return 0.5;
-  return Math.min(5, Math.max(0.5, Math.round(v * 2) / 2));
-}
-
-function StarIcon({ fill = 0 }) {
-  // fill: 0..1 (0 empty, 0.5 half, 1 full)
-  return (
-    <svg viewBox="0 0 24 24" className="star-svg" aria-hidden="true">
-      {/* base outline */}
-      <path
-        className="star-outline"
-        d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
-      />
-      {/* filled part clipped */}
-      <defs>
-        <clipPath id={`clip-${String(fill).replace(".", "-")}-${Math.random().toString(16).slice(2)}`}>
-          <rect x="0" y="0" width={24 * fill} height="24" />
-        </clipPath>
-      </defs>
-      <path
-        className="star-fill"
-        clipPath={`url(#clip-${String(fill).replace(".", "-")}-${Math.random().toString(16).slice(2)})`}
-        d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
-      />
-    </svg>
-  );
+  if (!Number.isFinite(v)) return 5;
+  return Math.min(5, Math.max(1, Math.round(v)));
 }
 
 /**
- * StarRating:
- * - half-star selection (0.5 steps)
+ * StarRating (1..5, no halves)
  * - hover preview
  * - click to set
+ * - selecting 3 fills 1..3
+ *
+ * Uses: flex-direction: row-reverse + input:checked ~ label
+ * IMPORTANT: Ensure CSS exists (see comment near component usage).
  */
-function StarRating({ value, onChange }) {
-  const [hoverValue, setHoverValue] = useState(null);
-  const displayValue = hoverValue ?? value;
-
-  function getValueFromEvent(index, e) {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const half = x < rect.width / 2 ? 0.5 : 1;
-    return clampHalf(index - 1 + half);
-  }
+function StarRating({ value, onChange, name = "rating" }) {
+  const safeValue = clampIntRating(value);
 
   return (
-    <div className="rating-wrap">
-      <div
-        className="stars"
-        onMouseLeave={() => setHoverValue(null)}
-        role="radiogroup"
-        aria-label="Rating"
-      >
-        {[1, 2, 3, 4, 5].map((index) => {
-          // Determine how filled this star should be given displayValue
-          const diff = displayValue - (index - 1);
-          const fill = diff >= 1 ? 1 : diff >= 0.5 ? 0.5 : 0;
-
-          return (
-            <button
-              key={index}
-              type="button"
-              className="star-hit"
-              onMouseMove={(e) => setHoverValue(getValueFromEvent(index, e))}
-              onFocus={() => setHoverValue(null)}
-              onClick={(e) => onChange(getValueFromEvent(index, e))}
-              onMouseDown={(e) => e.preventDefault()}
-              aria-label={`${index} star`}
-            >
-              <StarIcon fill={fill} />
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="star-value">
-        {displayValue}/5
-      </div>
+    <div className="star-rating" role="radiogroup" aria-label="Rating">
+      {[5, 4, 3, 2, 1].map((n) => {
+        const id = `${name}-${n}`;
+        return (
+          <React.Fragment key={n}>
+            <input
+              id={id}
+              name={name}
+              type="radio"
+              value={n}
+              checked={safeValue === n}
+              onChange={(e) => onChange(clampIntRating(e.target.value))}
+            />
+            <label htmlFor={id} title={`${n} star${n === 1 ? "" : "s"}`}>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                height="28"
+                viewBox="0 0 576 512"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path d="M316.9 18C311.6 7 300.4 0 288.1 0s-23.4 7-28.8 18L195 150.3 51.4 171.5c-12 1.8-22 10.2-25.7 21.7s-.7 24.2 7.9 32.7L137.8 329 113.2 474.7c-2 12 3 24.2 12.9 31.3s23 8 33.8 2.3l128.3-68.5 128.3 68.5c10.8 5.7 23.9 4.9 33.8-2.3s14.9-19.3 12.9-31.3L438.5 329 542.7 225.9c8.6-8.5 11.7-21.2 7.9-32.7s-13.7-19.9-25.7-21.7L381.2 150.3 316.9 18z" />
+              </svg>
+            </label>
+          </React.Fragment>
+        );
+      })}
     </div>
   );
 }
@@ -143,7 +112,9 @@ export default function PostReview() {
   useEffect(() => {
     async function loadCars() {
       try {
-        const res = await fetch(`${API}/djangoapp/get_cars`, { credentials: "include" });
+        const res = await fetch(`${API}/djangoapp/get_cars`, {
+          credentials: "include",
+        });
         const data = await res.json();
         const normalized = normalizeCarsPayload(data);
         setCars(normalized);
@@ -161,16 +132,11 @@ export default function PostReview() {
 
       setDealerLoading(true);
       try {
-        const res = await fetch(`${API}/djangoapp/get_dealer/${dealerId}`, {
+        const res = await fetch(`${API}/djangoapp/dealer/${dealerId}`, {
           credentials: "include",
         });
         const data = await res.json().catch(() => null);
 
-        // Handle many possible shapes:
-        // - [ { ...dealer } ]
-        // - { dealer: {...} }
-        // - { dealers: [ ... ] }
-        // - { Dealer: {...} } etc.
         const candidate =
           (Array.isArray(data) && data[0]) ||
           (Array.isArray(data?.dealers) && data.dealers[0]) ||
@@ -233,7 +199,7 @@ export default function PostReview() {
       return;
     }
 
-    const safeRating = clampHalf(rating);
+    const safeRating = clampIntRating(rating);
 
     const payload = {
       dealer_id: dealerId,
@@ -281,7 +247,8 @@ export default function PostReview() {
         <div className="review-shell fade-up">
           <h1 className="review-title">Leave a review</h1>
           <p className="review-subtitle">
-            Help others by sharing your experience. Your review improves transparency and dealership quality.
+            Help others by sharing your experience. Your review improves
+            transparency and dealership quality.
           </p>
 
           <div className="row g-4 mt-1">
@@ -292,25 +259,38 @@ export default function PostReview() {
 
                 <div className="text-muted small mb-2">Dealership</div>
                 <div className="pill mb-3">
-                  {dealerLoading ? "Loading..." : (dealerName ? dealerName : `Dealer #${dealerId}`)}
+                  {dealerLoading
+                    ? "Loading..."
+                    : dealerName
+                      ? dealerName
+                      : `Dealer #${dealerId}`}
                 </div>
 
                 <div className="text-muted small mb-2">Username</div>
                 <div className="pill mb-3">{username || "Not logged in"}</div>
 
                 <div className="text-muted small">
-                  Tip: keep it specific — staff behavior, transparency, wait times, paperwork, and after-sales support.
+                  Tip: keep it specific — staff behavior, transparency, wait
+                  times, paperwork, and after-sales support.
                 </div>
               </div>
             </div>
 
             {/* Right panel */}
             <div className="col-12 col-lg-8">
-              <form onSubmit={submitReview} className="card p-4 review-panel" style={{ boxShadow: "var(--shadow)" }}>
+              <form
+                onSubmit={submitReview}
+                className="card p-4 review-panel"
+                style={{ boxShadow: "var(--shadow)" }}
+              >
                 <div className="row g-3 align-items-end">
                   <div className="col-12 col-md-7">
                     <label className="form-label">Car</label>
-                    <select className="form-select" value={carId} onChange={(e) => setCarId(e.target.value)}>
+                    <select
+                      className="form-select"
+                      value={carId}
+                      onChange={(e) => setCarId(e.target.value)}
+                    >
                       {cars.map((c) => (
                         <option key={c.id} value={c.id}>
                           {c.label}
@@ -319,11 +299,17 @@ export default function PostReview() {
                     </select>
                   </div>
 
-                  <div className="col-12 col-md-5">
+                  <div className="col-12 col-md-5 text-center">
                     <label className="form-label">Rating</label>
+
+                    {/* NOTE: Add the CSS from my previous message:
+                       .star-rating { flex-direction: row-reverse; ... }
+                       input:checked ~ label svg fills 1..N
+                    */}
                     <StarRating value={rating} onChange={setRating} />
+
                     <div className="text-muted small mt-1">
-                      Hover to preview, click for half or full star.
+                      Hover to preview, click to select 1–5.
                     </div>
                   </div>
 
@@ -336,7 +322,9 @@ export default function PostReview() {
                       placeholder="e.g., Transparent pricing and friendly staff"
                       maxLength={80}
                     />
-                    <div className="text-muted small mt-1">{title.trim().length}/80</div>
+                    <div className="text-muted small mt-1">
+                      {title.trim().length}/80
+                    </div>
                   </div>
 
                   <div className="col-12">
@@ -349,7 +337,9 @@ export default function PostReview() {
                       rows={6}
                       maxLength={1500}
                     />
-                    <div className="text-muted small mt-1">{review.trim().length}/1500</div>
+                    <div className="text-muted small mt-1">
+                      {review.trim().length}/1500
+                    </div>
                   </div>
 
                   {error ? (
@@ -359,15 +349,26 @@ export default function PostReview() {
                   ) : null}
 
                   <div className="col-12 d-flex justify-content-end gap-2 mt-2">
-                    <button type="button" className="btn btn-outline-secondary" onClick={clearForm} disabled={submitting}>
+                    <button
+                      type="button"
+                      className="btn btn-outline-secondary"
+                      onClick={clearForm}
+                      disabled={submitting}
+                    >
                       Clear
                     </button>
-                    <button type="submit" className="btn btn-primary" disabled={submitting}>
+                    <button
+                      type="submit"
+                      className="btn btn-primary"
+                      disabled={submitting}
+                    >
                       {submitting ? "Submitting..." : "Submit review"}
                     </button>
                   </div>
 
-                  <div className="col-12 text-muted small">Note: abusive language or spam may be removed.</div>
+                  <div className="col-12 text-muted small">
+                    Note: abusive language or spam may be removed.
+                  </div>
                 </div>
               </form>
             </div>
