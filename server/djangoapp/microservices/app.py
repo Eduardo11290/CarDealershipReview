@@ -12,9 +12,9 @@ sia = SentimentIntensityAnalyzer()
 @app.get("/")
 def home():
     return (
-    "Welcome to the Sentiment Analyzer. "
-    "Use POST /analyze with JSON {\"text\": \"...\"} to get the sentiment"
-  )
+        "Welcome to the Sentiment Analyzer. "
+        "Use POST /analyze with JSON {\"text\": \"...\"} to get the sentiment"
+    )
 
 
 def _classify_sentiment(text: str) -> str:

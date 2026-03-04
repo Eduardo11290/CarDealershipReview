@@ -39,14 +39,16 @@ def analyze_review_sentiments(text):
     so review text never breaks URLs (slashes, spaces, unicode, etc.)
     """
     request_url = sentiment_analyzer_url.rstrip("/") + "/analyze"
+
     try:
         response = requests.post(
-        request_url,
-        json={"text": text},
-        timeout=15,
+            request_url,
+            json={"text": text},
+            timeout=15,
         )
         response.raise_for_status()
         return response.json()
+
     except Exception as err:
         print(f"analyze_review_sentiments failed: {err}")
         return {"sentiment": "neutral", "error": str(err)}
